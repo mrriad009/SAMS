@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import * as authService from '../services/auth.service.js';
 import { sendSuccess, sendError } from '../utils/response.js';
-import { env } from '../config/env.js';
+import { env, isAdminRegistrationAllowed } from '../config/env.js';
 import {
   crAccountEmail,
   DEMO_CR_SEMESTER,
@@ -87,7 +87,7 @@ export async function register(req: Request, res: Response) {
   const { eq } = await import('drizzle-orm');
   const admins = await db.select().from(users).where(eq(users.role, 'admin'));
 
-  if (admins.length > 0 && !process.env.ALLOW_ADMIN_REGISTER) {
+  if (admins.length > 0 && !isAdminRegistrationAllowed()) {
     return sendError(res, 'Registration disabled', 403);
   }
 

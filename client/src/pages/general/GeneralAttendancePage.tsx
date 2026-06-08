@@ -153,6 +153,10 @@ export default function GeneralAttendancePage() {
         sid = res.data.data.id;
         setSessionId(sid);
       }
+      if (!sid) {
+        toast.error('Failed to start class session');
+        return;
+      }
       await adminSessionsApi.submitAttendance(
         sid,
         roster.map((s: { studentDbId: string }) => ({

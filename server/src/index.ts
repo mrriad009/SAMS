@@ -20,6 +20,10 @@ await ensureUploadDirs();
 
 const app = express();
 
+if (env.isProduction) {
+  app.set('trust proxy', 1);
+}
+
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },

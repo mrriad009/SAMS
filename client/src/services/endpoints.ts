@@ -114,7 +114,14 @@ export const adminAnnouncementsApi = {
 export const adminRoutineApi = {
   list: (params?: { department?: string; semester?: number; section?: string }) =>
     api.get<ApiResponse<RoutineSlot[]>>('/admin/routine', { params }),
-  create: (data: Partial<RoutineSlot>) => api.post('/admin/routine', data),
+  create: (data: {
+    courseId: string;
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    roomNumber?: string;
+    section?: string;
+  }) => api.post('/admin/routine', data),
   update: (id: string, data: Partial<RoutineSlot>) => api.patch(`/admin/routine/${id}`, data),
   delete: (id: string) => api.delete(`/admin/routine/${id}`),
   importSlots: (slots: Array<{

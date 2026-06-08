@@ -309,7 +309,7 @@ export default function RoutinePage() {
       courseCode: string;
       startTime: string;
       endTime: string;
-      roomNumber: string;
+      roomNumber?: string | null;
       teacherAcronym?: string | null;
       teacherName?: string | null;
     };
@@ -321,7 +321,7 @@ export default function RoutinePage() {
         {formatTime(s.startTime)} - {formatTime(s.endTime)}
       </p>
       <p className="text-muted-foreground">
-        Rm {s.roomNumber}
+        Rm {s.roomNumber ?? '—'}
         {s.teacherAcronym ? ` · ${s.teacherAcronym}` : s.teacherName ? ` · ${s.teacherName}` : ''}
       </p>
       {!readOnly && (

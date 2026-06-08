@@ -9,12 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { publicApi } from '@/services/endpoints';
 import { getStaffHomePath } from '@/lib/staff-routes';
-import {
-  crAccountEmail,
-  crAccountPassword,
-  DEMO_CR_SEMESTER,
-  DEMO_CR_SECTION,
-} from '@/config/cr-accounts';
+import { crAccountPassword, DEMO_CR_SEMESTER, DEMO_CR_SECTION } from '@/config/cr-accounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,11 +57,8 @@ export default function LoginPage() {
 
   const onSubmit = (data: FormData) => submitLogin(data.email, data.password);
 
-  const fillDemo = (role: 'admin' | 'teacher' | 'student') => {
-    if (role === 'admin') {
-      setValue('email', 'admin');
-      setValue('password', 'admin');
-    } else if (role === 'teacher') {
+  const fillQuickLogin = (role: 'teacher' | 'student') => {
+    if (role === 'teacher') {
       setValue('email', 'cr8e');
       setValue('password', crAccountPassword(DEMO_CR_SEMESTER, DEMO_CR_SECTION));
     } else {
@@ -85,7 +77,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email or username</Label>
-            <Input id="email" placeholder="admin, cr8e, or 11220321018@gmail.com" {...register('email')} />
+            <Input id="email" placeholder="Username or email" {...register('email')} />
             {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
           </div>
           <div className="space-y-2">
@@ -95,7 +87,7 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
-            <Input id="password" type="password" placeholder="admin" {...register('password')} />
+            <Input id="password" type="password" placeholder="Your password" {...register('password')} />
             {errors.password && <p className="text-xs text-danger">{errors.password.message}</p>}
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
@@ -111,22 +103,13 @@ export default function LoginPage() {
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="button" variant="outline" className="flex-1 min-w-[100px]" size="sm" onClick={() => fillDemo('admin')}>
-            Admin demo
+          <Button type="button" variant="outline" className="flex-1 min-w-[100px]" size="sm" onClick={() => fillQuickLogin('teacher')}>
+            CR
           </Button>
-          <Button type="button" variant="outline" className="flex-1 min-w-[100px]" size="sm" onClick={() => fillDemo('teacher')}>
-            CR 8E demo
-          </Button>
-          <Button type="button" variant="outline" className="flex-1 min-w-[100px]" size="sm" onClick={() => fillDemo('student')}>
-            Student demo
+          <Button type="button" variant="outline" className="flex-1 min-w-[100px]" size="sm" onClick={() => fillQuickLogin('student')}>
+            Student
           </Button>
         </div>
-
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          CR logins: cr{'{sem}'}{'{section}'}@gmail.com (e.g. {crAccountEmail(8, 'A')}, {crAccountEmail(7, 'B')}) · password
-          matches (cr8a, cr7b)
-        </p>
-
       </CardContent>
     </Card>
   );

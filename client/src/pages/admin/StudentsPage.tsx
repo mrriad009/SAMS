@@ -157,7 +157,7 @@ export default function StudentsPage() {
                       </Button>
                       {!readOnly && (
                         <>
-                          <Button variant="ghost" size="icon" onClick={() => { setEditStudent(s); setForm({ name: s.name, email: s.email, studentId: s.studentId, department: s.department, section: s.section, batchYear: s.batchYear, phone: s.phone || '' }); setShowModal(true); }}>
+                          <Button variant="ghost" size="icon" onClick={() => { setEditStudent(s); setForm({ name: s.name, email: s.email, studentId: s.studentId, department: s.department as StudentForm['department'], section: s.section, batchYear: s.batchYear, phone: s.phone || '' }); setShowModal(true); }}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(s.id)}>

@@ -61,7 +61,7 @@ export async function getStudent(req: Request, res: Response) {
 export async function getStudentProfile(req: Request, res: Response) {
   const student = await resolveStudent(paramId(req.params.id));
   await assertStaffCanAccessStudent(req, student);
-  const profile = await getPublicStudentProfile(student.studentId);
+  const profile = await getPublicStudentProfile(student.studentId, { includePrivateFields: true });
   return sendSuccess(res, profile);
 }
 

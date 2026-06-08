@@ -23,7 +23,7 @@ const schema = z.object({
   studentId: z.string().min(1, 'Student ID is required'),
   department: z.string().min(1, 'Department is required'),
   section: z.string().min(1, 'Section is required'),
-  batchYear: z.coerce.number().int().min(currentYear - 10).max(currentYear + 1),
+  batchYear: z.number().int().min(currentYear - 10).max(currentYear + 1),
   phone: z.string().optional(),
 });
 

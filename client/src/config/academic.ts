@@ -29,7 +29,7 @@ export function getTodayIsoDayOfWeek(date = new Date()): number {
 }
 
 export function sortDayValues(days: number[]): number[] {
-  const order = WEEK_DAYS.map((d) => d.value);
+  const order = WEEK_DAYS.map((d) => d.value) as number[];
   return [...days].sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 

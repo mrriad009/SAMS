@@ -58,7 +58,11 @@ export async function updateAttendance(req: Request, res: Response) {
 
 export async function submitAttendance(req: Request, res: Response) {
   const sessionId = paramId(req.params.id);
-  const records = req.body.records as Array<{ studentId: string; status: string }>;
+  const records = req.body.records as Array<{
+    studentId: string;
+    status: 'present' | 'absent' | 'late' | 'excused';
+    remarks?: string;
+  }>;
 
   if (req.user?.role === 'teacher') {
     await permissions.assertSessionInTeacherScope(req.user.userId, sessionId, {

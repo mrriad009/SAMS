@@ -6,8 +6,20 @@ import * as settingsService from '../services/settings.service.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { departmentSchema, sectionSchema } from '../utils/academic.validation.js';
 import { isValidBatchYear } from '../utils/semester.js';
+import { isStudentRegistrationAllowed } from '../config/env.js';
+import { isAllowedImageBuffer } from '../utils/image-validation.js';
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Only image uploads are allowed'));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 export const avatarUpload = upload.single('avatar');
 
@@ -33,8 +45,14 @@ const studentRegisterSchema = z.object({
     .refine(isValidBatchYear, 'Select a valid batch year'),
 });
 
+const adminProfileSchema = z.object({
+  name: z.string().min(2).optional(),
+  phone: z.string().optional(),
+  avatarUrl: z.string().optional(),
+});
+
 export async function registerStudent(req: Request, res: Response) {
-  if (process.env.ALLOW_STUDENT_REGISTER === 'false') {
+  if (!isStudentRegistrationAllowed()) {
     return sendError(res, 'Student registration is disabled', 403);
   }
 
@@ -60,6 +78,9 @@ export async function updateContact(req: Request, res: Response) {
 
 export async function uploadAvatar(req: Request, res: Response) {
   if (!req.file) return sendError(res, 'No file uploaded');
+  if (!isAllowedImageBuffer(req.file.buffer)) {
+    return sendError(res, 'Invalid image file', 400);
+  }
   const user = await profileService.uploadAvatar(req.user!.userId, req.file.buffer);
   return sendSuccess(res, user, 'Avatar uploaded');
 }
@@ -75,6 +96,9 @@ export async function updateSettings(req: Request, res: Response) {
 }
 
 export async function updateAdminProfile(req: Request, res: Response) {
-  const user = await profileService.updateProfile(req.user!.userId, req.body);
+  const parsed = adminProfileSchema.safeParse(req.body);
+  if (!parsed.success) return sendError(res, parsed.error.errors[0].message);
+
+  const user = await profileService.updateProfile(req.user!.userId, parsed.data);
   return sendSuccess(res, user, 'Profile updated');
 }

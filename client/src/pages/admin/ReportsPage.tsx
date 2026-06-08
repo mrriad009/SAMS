@@ -31,7 +31,7 @@ export default function ReportsPage() {
           readOnly && teacherProfile
             ? {
                 department: teacherProfile.department,
-                semester: teacherProfile.semester ?? undefined,
+                ...(teacherProfile.semester != null ? { semester: teacherProfile.semester } : {}),
               }
             : undefined
         )

@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../config/db.js';
 import { systemSettings } from '../models/schema.js';
+import { AppError } from '../utils/response.js';
 
 const DEFAULTS: Record<string, string> = {
   attendance_threshold: '75',
@@ -8,6 +9,8 @@ const DEFAULTS: Record<string, string> = {
   current_semester: '8',
   app_mode: 'general',
 };
+
+const ALLOWED_SETTING_KEYS = new Set(Object.keys(DEFAULTS));
 
 export async function getSetting(key: string): Promise<string> {
   const [setting] = await db
@@ -55,6 +58,12 @@ export async function updateSetting(key: string, value: string) {
 export async function updateSettings(settings: Record<string, string>) {
   const results = [];
   for (const [key, value] of Object.entries(settings)) {
+    if (!ALLOWED_SETTING_KEYS.has(key)) {
+      throw new AppError(`Unknown setting key: ${key}`, 400);
+    }
+    if (typeof value !== 'string') {
+      throw new AppError(`Invalid value for setting: ${key}`, 400);
+    }
     results.push(await updateSetting(key, value));
   }
   return results;

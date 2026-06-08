@@ -9,9 +9,20 @@ export async function updateProfile(
   userId: string,
   data: { name?: string; phone?: string; avatarUrl?: string }
 ) {
+  const updates: {
+    name?: string;
+    phone?: string;
+    avatarUrl?: string;
+    updatedAt: Date;
+  } = { updatedAt: new Date() };
+
+  if (data.name !== undefined) updates.name = data.name;
+  if (data.phone !== undefined) updates.phone = data.phone;
+  if (data.avatarUrl !== undefined) updates.avatarUrl = data.avatarUrl;
+
   const [updated] = await db
     .update(users)
-    .set({ ...data, updatedAt: new Date() })
+    .set(updates)
     .where(eq(users.id, userId))
     .returning();
 

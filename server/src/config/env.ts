@@ -40,8 +40,42 @@ export function isCloudinaryConfigured(): boolean {
   return true;
 }
 
+const DEV_JWT_SECRETS = new Set(['dev-access-secret', 'dev-refresh-secret']);
+
+function assertStrongJwtSecret(name: string, value: string): void {
+  if (DEV_JWT_SECRETS.has(value) || value.length < 32) {
+    throw new Error(`${name} must be a strong random value (min 32 chars) in production`);
+  }
+}
+
 export function validateEnv(): void {
   if (!env.databaseUrl) {
     console.warn('Warning: DATABASE_URL not set. Database operations will fail.');
   }
+
+  if (!env.isProduction) return;
+
+  requireEnv('DATABASE_URL');
+
+  const accessSecret = requireEnv('JWT_ACCESS_SECRET');
+  const refreshSecret = requireEnv('JWT_REFRESH_SECRET');
+
+  assertStrongJwtSecret('JWT_ACCESS_SECRET', accessSecret);
+  assertStrongJwtSecret('JWT_REFRESH_SECRET', refreshSecret);
+
+  if (accessSecret === refreshSecret) {
+    throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ in production');
+  }
+}
+
+/** Whether open student self-registration is allowed */
+export function isStudentRegistrationAllowed(): boolean {
+  if (env.isProduction) return process.env.ALLOW_STUDENT_REGISTER === 'true';
+  return process.env.ALLOW_STUDENT_REGISTER !== 'false';
+}
+
+/** Whether admin self-registration is allowed when admins already exist */
+export function isAdminRegistrationAllowed(): boolean {
+  if (env.isProduction) return process.env.ALLOW_ADMIN_REGISTER === 'true';
+  return !!process.env.ALLOW_ADMIN_REGISTER;
 }

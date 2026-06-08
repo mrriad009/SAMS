@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { SelectField } from '@/components/ui/select-field';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DEPARTMENTS, SECTIONS } from '@/config/academic';
+import { UserAvatar } from '@/components/shared/UserAvatar';
 
 interface ProfileForm {
   name: string;
@@ -97,13 +98,7 @@ export default function StudentProfilePage() {
       <Card>
         <CardContent className="flex items-center gap-4 p-6">
           <div className="relative">
-            <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary overflow-hidden">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                form.name?.charAt(0) || user?.name?.charAt(0)
-              )}
-            </div>
+            <UserAvatar src={user?.avatarUrl} name={form.name || user?.name} size="md" />
             <label className="absolute bottom-0 right-0 cursor-pointer">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white text-xs">
                 +

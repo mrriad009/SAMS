@@ -147,7 +147,7 @@ export interface PublicStudentProfile {
     id: string;
     studentId: string;
     name: string;
-    email: string;
+    email?: string;
     phone?: string | null;
     avatarUrl?: string | null;
     department: string;

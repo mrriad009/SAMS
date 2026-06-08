@@ -4,7 +4,11 @@ import { courses, studentCourses, students, teachers, users } from '../models/sc
 import { getStudentAttendanceSummaryByDbId } from './attendance.service.js';
 import { getStudentByRollNumber } from './student.service.js';
 
-export async function getPublicStudentProfile(rollNumber: string) {
+export async function getPublicStudentProfile(
+  rollNumber: string,
+  options?: { includePrivateFields?: boolean }
+) {
+  const includePrivateFields = options?.includePrivateFields ?? false;
   const student = await getStudentByRollNumber(rollNumber);
 
   const enrolledCourses = await db
@@ -31,16 +35,20 @@ export async function getPublicStudentProfile(rollNumber: string) {
       id: student.id,
       studentId: student.studentId,
       name: student.name,
-      email: student.email,
-      phone: student.phone,
       avatarUrl: student.avatarUrl,
       department: student.department,
       semester: student.semester,
       section: student.section,
       batchYear: student.batchYear,
-      guardianName: student.guardianName,
-      guardianPhone: student.guardianPhone,
-      address: student.address,
+      ...(includePrivateFields
+        ? {
+            email: student.email,
+            phone: student.phone,
+            guardianName: student.guardianName,
+            guardianPhone: student.guardianPhone,
+            address: student.address,
+          }
+        : {}),
     },
     courses: enrolledCourses,
     attendance,

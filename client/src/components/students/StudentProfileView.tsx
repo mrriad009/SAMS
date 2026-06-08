@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Mail, MapPin, Phone, User } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Mail, MapPin, Phone } from 'lucide-react';
+import { UserAvatar } from '@/components/shared/UserAvatar';
 import type { PublicStudentProfile } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,15 +31,12 @@ export function StudentProfileView({ data, backTo, backLabel = 'Back to students
 
       <Card>
         <CardContent className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start">
-          <div className="mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 sm:mx-0">
-            {profile.avatarUrl ? (
-              <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <User className="h-10 w-10 text-muted-foreground" />
-              </div>
-            )}
-          </div>
+          <UserAvatar
+            src={profile.avatarUrl}
+            name={profile.name}
+            size="lg"
+            className="mx-auto sm:mx-0"
+          />
           <div className="min-w-0 flex-1 text-center sm:text-left">
             <h1 className="font-display text-2xl font-bold">{profile.name}</h1>
             <p className="mt-1 font-mono text-sm text-muted-foreground">{profile.studentId}</p>
