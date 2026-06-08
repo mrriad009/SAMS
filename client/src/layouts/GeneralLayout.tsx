@@ -1,15 +1,16 @@
 import { Link, Outlet } from 'react-router-dom';
-import { ClipboardCheck, LogOut, Megaphone, PanelRightOpen } from 'lucide-react';
+import { Calendar, ClipboardCheck, LogOut, Megaphone, PanelRightOpen } from 'lucide-react';
 import { APP_NAME } from '@/config/app';
 import { CSE_DEPARTMENT } from '@/config/academic';
 import { useAuth } from '@/hooks/useAuth';
-import { getAdvancedPanelPath, getStaffAnnouncementsPath } from '@/lib/staff-routes';
+import { getAdvancedPanelPath, getStaffAnnouncementsPath, getStaffRoutinePath } from '@/lib/staff-routes';
 import { Button } from '@/components/ui/button';
 
 export function GeneralLayout() {
   const { user, logout } = useAuth();
   const advancedPath = user ? getAdvancedPanelPath(user.role) : '/login';
   const announcementsPath = user ? getStaffAnnouncementsPath(user.role) : '/login';
+  const routinePath = user ? getStaffRoutinePath(user.role) : '/login';
 
   return (
     <div className="min-h-screen bg-background dark:bg-dark-bg">
@@ -23,6 +24,12 @@ export function GeneralLayout() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
+            <Button variant="outline" size="sm" asChild>
+              <Link to={routinePath}>
+                <Calendar className="mr-1.5 h-4 w-4" />
+                <span className="hidden sm:inline">Routine</span>
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to={announcementsPath}>
                 <Megaphone className="mr-1.5 h-4 w-4" />

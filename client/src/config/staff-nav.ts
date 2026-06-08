@@ -17,7 +17,7 @@ export const STAFF_NAV_ITEMS = [
   { segment: 'attendance', label: 'Attendance', icon: ClipboardCheck, modes: ['advanced'] as AppMode[] },
   { segment: 'reports', label: 'Reports', icon: BarChart3, modes: ['general', 'advanced'] as AppMode[] },
   { segment: 'announcements', label: 'Announcements', icon: Megaphone, modes: ['general', 'advanced'] as AppMode[] },
-  { segment: 'routine', label: 'Routine', icon: Calendar, modes: ['advanced'] as AppMode[] },
+  { segment: 'routine', label: 'Routine', icon: Calendar, modes: ['general', 'advanced'] as AppMode[] },
   { segment: 'settings', label: 'Settings', icon: Settings, modes: ['advanced'] as AppMode[] },
 ] as const;
 

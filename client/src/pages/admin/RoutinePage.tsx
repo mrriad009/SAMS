@@ -20,7 +20,10 @@ import {
   dayLabel,
   getTodayIsoDayOfWeek,
 } from '@/config/academic';
-import type { Course } from '@/types';
+import type { Course, TeacherProfile } from '@/types';
+import { CSE_DEPARTMENT } from '@/config/academic';
+import { useAuth } from '@/hooks/useAuth';
+import { useStaffPermissions } from '@/hooks/useStaffPermissions';
 
 type QuickSlot = {
   courseId: string;
@@ -53,13 +56,39 @@ function createDefaultDaySlots(): Record<number, QuickSlot[]> {
 
 import { useReadOnlyStaff } from '@/hooks/useReadOnlyStaff';
 
+function defaultViewFilters(
+  readOnly: boolean,
+  profile?: TeacherProfile,
+  lockedSection?: string | null,
+  lockedSemester?: number | null
+) {
+  if (readOnly && profile) {
+    return {
+      department: profile.department || CSE_DEPARTMENT,
+      section: lockedSection ?? profile.section ?? '',
+      semester:
+        lockedSemester != null
+          ? String(lockedSemester)
+          : profile.semester != null
+            ? String(profile.semester)
+            : '',
+    };
+  }
+  return { department: '', section: '', semester: '' };
+}
+
 export default function RoutinePage() {
   const readOnly = useReadOnlyStaff();
+  const { user } = useAuth();
+  const { lockedSection, lockedSemester } = useStaffPermissions();
+  const teacherProfile = user?.profile as TeacherProfile | undefined;
   const todayIso = getTodayIsoDayOfWeek();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [showQuickSetup, setShowQuickSetup] = useState(false);
-  const [viewFilters, setViewFilters] = useState({ department: '', section: '', semester: '' });
+  const [viewFilters, setViewFilters] = useState(() =>
+    defaultViewFilters(readOnly, teacherProfile, lockedSection, lockedSemester)
+  );
   const [quickFilters, setQuickFilters] = useState({ department: '', section: '', semester: '' });
   const [selectedDays, setSelectedDays] = useState<number[]>([...DEFAULT_ROUTINE_DAYS]);
   const [daySlots, setDaySlots] = useState<Record<number, QuickSlot[]>>(createDefaultDaySlots);
@@ -341,7 +370,11 @@ export default function RoutinePage() {
       <div className="page-header">
         <div>
           <h2 className="font-display text-xl font-bold sm:text-2xl">Class Routine</h2>
-          <p className="text-sm text-muted-foreground sm:text-base">Weekly timetable builder</p>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            {readOnly && viewFilters.section && viewFilters.semester
+              ? `${viewFilters.department} · Semester ${viewFilters.semester} · Section ${viewFilters.section}`
+              : 'Weekly timetable builder'}
+          </p>
         </div>
         {!readOnly && (
           <div className="page-actions">
@@ -368,71 +401,75 @@ export default function RoutinePage() {
         )}
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">View routine by</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <div className="filter-grid">
-            <div className="field-full">
-              <Label>Department</Label>
-              <SelectField
-                value={viewFilters.department}
-                placeholder="Select department"
-                onChange={(e) => setViewFilters({ department: e.target.value, section: '', semester: '' })}
-              >
-                {DEPARTMENTS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </SelectField>
+      {!readOnly && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">View routine by</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6">
+            <div className="filter-grid">
+              <div className="field-full">
+                <Label>Department</Label>
+                <SelectField
+                  value={viewFilters.department}
+                  placeholder="Select department"
+                  onChange={(e) => setViewFilters({ department: e.target.value, section: '', semester: '' })}
+                >
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+              <div className="field-full">
+                <Label>Section</Label>
+                <SelectField
+                  value={viewFilters.section}
+                  placeholder="Select section"
+                  disabled={!viewFilters.department}
+                  onChange={(e) => setViewFilters({ ...viewFilters, section: e.target.value, semester: '' })}
+                >
+                  {SECTIONS.map((s) => (
+                    <option key={s} value={s}>
+                      Section {s}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+              <div className="field-full">
+                <Label>Semester</Label>
+                <SelectField
+                  value={viewFilters.semester}
+                  placeholder="Select semester"
+                  disabled={!viewFilters.section}
+                  onChange={(e) => setViewFilters({ ...viewFilters, semester: e.target.value })}
+                >
+                  {SEMESTERS.map((s) => (
+                    <option key={s} value={s}>
+                      Semester {s}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
             </div>
-            <div className="field-full">
-              <Label>Section</Label>
-              <SelectField
-                value={viewFilters.section}
-                placeholder="Select section"
-                disabled={!viewFilters.department}
-                onChange={(e) => setViewFilters({ ...viewFilters, section: e.target.value, semester: '' })}
-              >
-                {SECTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    Section {s}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
-            <div className="field-full">
-              <Label>Semester</Label>
-              <SelectField
-                value={viewFilters.semester}
-                placeholder="Select semester"
-                disabled={!viewFilters.section}
-                onChange={(e) => setViewFilters({ ...viewFilters, semester: e.target.value })}
-              >
-                {SEMESTERS.map((s) => (
-                  <option key={s} value={s}>
-                    Semester {s}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
-          </div>
-          {!canViewRoutine && (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Select department, section, and semester to view the matching routine.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+            {!canViewRoutine && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Select department, section, and semester to view the matching routine.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {canViewRoutine && (
         <>
           {displayDays.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
-                No routine yet. Use Quick Setup to add classes for this department and semester.
+                {readOnly
+                  ? 'No routine scheduled for your section yet.'
+                  : 'No routine yet. Use Quick Setup to add classes for this department and semester.'}
               </CardContent>
             </Card>
           ) : (

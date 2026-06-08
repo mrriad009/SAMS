@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { publicApi } from '@/services/endpoints';
 import { getStaffHomePath } from '@/lib/staff-routes';
-import { crAccountPassword, DEMO_CR_SEMESTER, DEMO_CR_SECTION } from '@/config/cr-accounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +33,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -56,16 +55,6 @@ export default function LoginPage() {
   };
 
   const onSubmit = (data: FormData) => submitLogin(data.email, data.password);
-
-  const fillQuickLogin = (role: 'teacher' | 'student') => {
-    if (role === 'teacher') {
-      setValue('email', 'cr8e');
-      setValue('password', crAccountPassword(DEMO_CR_SEMESTER, DEMO_CR_SECTION));
-    } else {
-      setValue('email', 'student');
-      setValue('password', '11220321018');
-    }
-  };
 
   return (
     <Card className="border-0 shadow-lg dark:bg-dark-surface">
@@ -101,15 +90,6 @@ export default function LoginPage() {
             Create an account
           </Link>
         </p>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="button" variant="outline" className="flex-1 min-w-[100px]" size="sm" onClick={() => fillQuickLogin('teacher')}>
-            CR
-          </Button>
-          <Button type="button" variant="outline" className="flex-1 min-w-[100px]" size="sm" onClick={() => fillQuickLogin('student')}>
-            Student
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

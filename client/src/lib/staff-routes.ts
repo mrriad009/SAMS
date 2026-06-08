@@ -18,3 +18,7 @@ export function getStaffBasePath(role: UserRole): '/admin' | '/teacher' {
 export function getStaffAnnouncementsPath(role: UserRole): string {
   return `${getStaffBasePath(role)}/announcements`;
 }
+
+export function getStaffRoutinePath(role: UserRole): string {
+  return `${getStaffBasePath(role)}/routine`;
+}
