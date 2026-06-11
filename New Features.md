@@ -14,9 +14,7 @@ Planned additions to the Student Attendance Management System (SAMS). Each item 
 - Faster daily workflow for CRs — large buttons, quick present/absent toggles
 - Students can check attendance, routine, and announcements on the go
 
-**Who benefits:** CRs, teachers, students
 
-**Why it matters:** Most attendance is marked on phones in classrooms. A mobile-ready experience makes the system practical for daily use.
 
 ---
 
@@ -30,9 +28,7 @@ Planned additions to the Student Attendance Management System (SAMS). Each item 
 - Pending records stored locally and uploaded automatically when back online
 - Clear indicator when data is saved locally vs. synced to the server
 
-**Who benefits:** CRs and teachers in areas with weak Wi‑Fi or mobile data
 
-**Why it matters:** Attendance should not fail because of network problems during class.
 
 ---
 
@@ -46,9 +42,7 @@ Planned additions to the Student Attendance Management System (SAMS). Each item 
 - **SMS alerts** — critical messages for users who may not check the app regularly
 - User preferences to control which alert types they receive
 
-**Who benefits:** Students, CRs, teachers, admins
 
-**Why it matters:** In-app notifications only work when users open the site. External alerts reach people when action is needed.
 
 ---
 
@@ -63,9 +57,6 @@ Planned additions to the Student Attendance Management System (SAMS). Each item 
 - Approved absences automatically marked as **excused** in attendance records
 - Student notified when a decision is made
 
-**Who benefits:** Students, CRs, teachers, admins
-
-**Why it matters:** Replaces informal messages and keeps attendance records accurate and fair.
 
 ---
 
@@ -80,9 +71,7 @@ Planned additions to the Student Attendance Management System (SAMS). Each item 
 - Manual marking remains available as a fallback
 - Admin can view which attendance was QR-based vs. manually marked
 
-**Who benefits:** CRs (faster marking), students (self check-in)
 
-**Why it matters:** Speeds up roll call in large sections and reduces manual work for CRs.
 
 ---
 
@@ -96,9 +85,7 @@ Planned additions to the Student Attendance Management System (SAMS). Each item 
 - Includes student name, roll, course, attendance %, and defaulter status
 - Suitable for department meetings, accreditation records, and offline archives
 
-**Who benefits:** Admins, teachers, department heads
 
-**Why it matters:** Staff often need downloadable reports for meetings and official records, not just on-screen views.
 
 ---
 
@@ -112,9 +99,7 @@ Planned additions to the Student Attendance Management System (SAMS). Each item 
 - Filters and dashboards scoped by department
 - Super-admin role to manage all departments from one panel
 
-**Who benefits:** University admin, other departments, IT
 
-**Why it matters:** Allows the same platform to serve the whole institution instead of rebuilding for each department.
 
 ---
 
