@@ -16,8 +16,10 @@ export function studentMatchesScope(
   scope: StaffScope
 ): boolean {
   if (student.department !== scope.department) return false;
-  if (scope.semester != null && student.semester !== scope.semester) return false;
   if (scope.section && student.section !== scope.section) return false;
+  // A section CR is bound to that section. Batch-year sync can move a student
+  // from semester 8 to 9 while the CR account stays on semester 8.
+  if (!scope.section && scope.semester != null && student.semester !== scope.semester) return false;
   return true;
 }
 

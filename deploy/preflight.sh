@@ -25,4 +25,4 @@ echo "=== Node listeners (avoid port clashes) ==="
 sudo ss -tlnp 2>/dev/null | grep -E 'node|LISTEN' | head -20 || true
 
 echo ""
-echo "Preflight complete. Safe to deploy if port 3003 is free and nginx -t passes after adding captainbnb.online config."
+echo "Preflight complete. Safe to deploy if port 3003 is free and nginx -t passes after adding samsbd.online config."

@@ -6,12 +6,12 @@ This app is designed to run on a VPS that **already hosts other websites**. Foll
 
 | Area | This project | Your existing sites |
 |------|--------------|---------------------|
-| Nginx configs | **Only** adds `sites-available/captainbnb.online` | Other files in `sites-available/` / `sites-enabled/` are **not modified** |
-| Web root | `/var/www/captainbnb.online/` only | Their own folders (e.g. `/var/www/site1`) stay as-is |
+| Nginx configs | **Only** adds `sites-available/samsbd.online` | Other files in `sites-available/` / `sites-enabled/` are **not modified** |
+| Web root | `/var/www/samsbd.online/` only | Their own folders (e.g. `/var/www/site1`) stay as-is |
 | PM2 process | New app name: `attendance-api` | Other PM2 apps are **not** stopped or deleted |
 | API port | `3003` on `127.0.0.1` only | Does not use 80, 443, or their ports |
-| SSL cert | New cert for `captainbnb.online` only | Existing certs for other domains are **not** renewed or replaced |
-| DNS | Only `captainbnb.online` A records | Other domains unchanged |
+| SSL cert | New cert for `samsbd.online` only | Existing certs for other domains are **not** renewed or replaced |
+| DNS | Only `samsbd.online` A records | Other domains unchanged |
 
 ## Do NOT run these on a shared VPS
 
@@ -27,7 +27,7 @@ pm2 kill
 cd /var/www/other-site && git pull   # wrong directory
 
 # NEVER — global certbot without -d (can pick wrong vhost)
-sudo certbot --nginx    # without -d captainbnb.online
+sudo certbot --nginx    # without -d samsbd.online
 ```
 
 ## Safe commands only
@@ -37,8 +37,8 @@ sudo certbot --nginx    # without -d captainbnb.online
 sudo ss -tlnp | grep ':3003'
 
 # 2. Add ONLY this site config (does not edit other files)
-sudo cp deploy/nginx/captainbnb.online.initial.conf /etc/nginx/sites-available/captainbnb.online
-sudo ln -sf /etc/nginx/sites-available/captainbnb.online /etc/nginx/sites-enabled/captainbnb.online
+sudo cp deploy/nginx/samsbd.online.initial.conf /etc/nginx/sites-available/samsbd.online
+sudo ln -sf /etc/nginx/sites-available/samsbd.online /etc/nginx/sites-enabled/samsbd.online
 
 # 3. Test ALL nginx configs together before reload
 sudo nginx -t
@@ -47,7 +47,7 @@ sudo nginx -t
 sudo systemctl reload nginx
 
 # 5. SSL for THIS domain only
-sudo certbot --nginx -d captainbnb.online -d www.captainbnb.online
+sudo certbot --nginx -d samsbd.online -d www.samsbd.online
 
 # 6. PM2 — add or reload ONLY this app
 pm2 start ecosystem.config.cjs --env production   # first time
@@ -79,8 +79,8 @@ If port **3003** is already taken, change `PORT` in `server/.env` and `ecosystem
 
 Nginx routes by `server_name`. This project only answers:
 
-- `captainbnb.online`
-- `www.captainbnb.online`
+- `samsbd.online`
+- `www.samsbd.online`
 
 Traffic to your other domains still goes to their existing `server { ... }` blocks. Adding a new file under `sites-enabled/` does not change behavior for other hostnames.
 
@@ -89,10 +89,10 @@ Traffic to your other domains still goes to their existing `server { ... }` bloc
 Always pass the domain explicitly:
 
 ```bash
-sudo certbot --nginx -d captainbnb.online -d www.captainbnb.online
+sudo certbot --nginx -d samsbd.online -d www.samsbd.online
 ```
 
-Certbot will attach the certificate to the vhost that already has `server_name captainbnb.online`. It will **not** remove certificates for your other domains.
+Certbot will attach the certificate to the vhost that already has `server_name samsbd.online`. It will **not** remove certificates for your other domains.
 
 ## PM2 on a multi-app server
 
@@ -106,7 +106,7 @@ If you already use `pm2 startup`, you do **not** need to run it again.
 
 ```bash
 # Disable only this site
-sudo rm /etc/nginx/sites-enabled/captainbnb.online
+sudo rm /etc/nginx/sites-enabled/samsbd.online
 sudo nginx -t && sudo systemctl reload nginx
 
 # Stop only this API

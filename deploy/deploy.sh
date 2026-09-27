@@ -28,6 +28,6 @@ fi
 pm2 save
 
 echo "==> Done."
-echo "    Nginx: only reload after editing captainbnb.online config:"
+echo "    Nginx: only reload after editing samsbd.online config:"
 echo "    sudo nginx -t && sudo systemctl reload nginx"
 echo "    Do NOT remove other sites in /etc/nginx/sites-enabled/"

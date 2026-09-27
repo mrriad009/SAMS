@@ -120,7 +120,7 @@ export default function GeneralAttendancePage() {
 
   const { data: cachedRoster } = useQuery({
     queryKey: ['cached-roster', selectedCourse, selectedDate, section],
-    queryFn: () => readRoster(selectedCourse, selectedDate, section),
+    queryFn: async () => (await readRoster(selectedCourse, selectedDate, section)) ?? null,
     enabled: !!selectedCourse && !sheet,
   });
 

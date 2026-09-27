@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../config/db.js';
-import { classSessions, courses } from '../models/schema.js';
+import { classSessions, courses, students } from '../models/schema.js';
 import { AppError } from '../utils/response.js';
 import { getStaffScope, studentMatchesScope, type StaffScope } from './teacher.service.js';
-import * as studentService from './student.service.js';
 import { localDateKey } from '../utils/date.js';
 
 export function todayDateKey(): string {
@@ -72,7 +71,16 @@ export async function assertStudentsInTeacherScope(
 ): Promise<void> {
   const scope = await getStaffScope(userId);
   for (const id of studentDbIds) {
-    const student = await studentService.getStudentById(id);
+    const [student] = await db
+      .select({
+        department: students.department,
+        semester: students.semester,
+        section: students.section,
+      })
+      .from(students)
+      .where(eq(students.id, id))
+      .limit(1);
+    if (!student) throw new AppError('Student not found', 404);
     if (!studentMatchesScope(student, scope)) {
       throw new AppError('You can only mark attendance for students in your section', 403);
     }

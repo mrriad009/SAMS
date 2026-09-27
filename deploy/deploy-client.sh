@@ -11,10 +11,10 @@ npm ci
 echo "==> Building frontend"
 npm run build
 
-WEB_ROOT="${WEB_ROOT:-/var/www/captainbnb.online/client/dist}"
+WEB_ROOT="${WEB_ROOT:-/var/www/samsbd.online/client/dist}"
 echo "==> Publishing to ${WEB_ROOT}"
 mkdir -p "$(dirname "$WEB_ROOT")"
 rm -rf "$WEB_ROOT"
 cp -R dist "$WEB_ROOT"
 
-echo "==> Done. Hard-refresh https://captainbnb.online/login (Cmd+Shift+R)."
+echo "==> Done. Hard-refresh https://samsbd.online/login (Cmd+Shift+R)."
