@@ -226,7 +226,8 @@ export async function reviewLeaveRequest(
         await submitAttendance(
           session.id,
           [{ studentId: student.id, status: 'excused', markSource: 'manual', remarks: remark }],
-          reviewerId
+          reviewerId,
+          { notifyStudents: false }
         );
       }
     }

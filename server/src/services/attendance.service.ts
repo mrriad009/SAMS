@@ -103,9 +103,11 @@ export async function submitAttendance(
     remarks?: string;
     markSource?: 'manual' | 'qr';
   }>,
-  markedBy: string
+  markedBy: string,
+  options?: { notifyStudents?: boolean }
 ) {
   await getSessionAttendance(sessionId);
+  const changed: Array<{ studentId: string; status: 'present' | 'absent' | 'late' | 'excused' }> = [];
 
   // neon-http driver does not support db.transaction — run statements sequentially
   for (const record of records) {
@@ -120,6 +122,10 @@ export async function submitAttendance(
     const markSource =
       record.markSource ??
       (existing && existing.status === record.status ? existing.markSource : 'manual');
+
+    if (!existing || existing.status !== record.status) {
+      changed.push({ studentId: record.studentId, status: record.status });
+    }
 
     if (existing) {
       await db
@@ -144,6 +150,10 @@ export async function submitAttendance(
     }
   }
 
+  if (options?.notifyStudents !== false && changed.length > 0) {
+    await notifyMarkedStudents(sessionId, changed);
+  }
+
   await db
     .update(classSessions)
     .set({ status: 'completed' })
@@ -166,7 +176,47 @@ export async function updateAttendanceRecord(
     .where(eq(attendance.id, id))
     .returning();
 
+  if (data.status && data.status !== record.status) {
+    await notifyMarkedStudents(record.sessionId, [{ studentId: record.studentId, status: data.status }]);
+  }
+
   return updated;
+}
+
+async function notifyMarkedStudents(
+  sessionId: string,
+  changes: Array<{ studentId: string; status: 'present' | 'absent' | 'late' | 'excused' }>
+) {
+  const [session] = await db
+    .select({
+      date: classSessions.date,
+      courseCode: courses.courseCode,
+    })
+    .from(classSessions)
+    .innerJoin(courses, eq(courses.id, classSessions.courseId))
+    .where(eq(classSessions.id, sessionId))
+    .limit(1);
+  if (!session) return;
+
+  const labels = { present: 'present', absent: 'absent', late: 'late', excused: 'excused' } as const;
+
+  for (const change of changes) {
+    const [student] = await db
+      .select({ userId: students.userId })
+      .from(students)
+      .where(eq(students.id, change.studentId))
+      .limit(1);
+    if (!student) continue;
+
+    const title = change.status === 'present' ? 'Marked present' : 'Attendance updated';
+    const message = `You are marked ${labels[change.status]} for ${session.courseCode} on ${session.date}.`;
+    try {
+      const { notifyStudentMark } = await import('./alert.service.js');
+      await notifyStudentMark(student.userId, { title, message, referenceId: sessionId });
+    } catch (error) {
+      console.error('Student attendance alert failed:', error);
+    }
+  }
 }
 
 export async function getAttendanceRecordContext(id: string) {

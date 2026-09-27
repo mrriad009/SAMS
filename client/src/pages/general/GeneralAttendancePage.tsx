@@ -5,6 +5,7 @@ import { SessionQrPanel } from '@/components/attendance/SessionQrPanel';
 import { AlertPreferencesCard } from '@/components/shared/AlertPreferencesCard';
 import { SyncStatus } from '@/components/shared/SyncStatus';
 import { notifyOfflineChange } from '@/hooks/useOfflineSync';
+import { applyLiveSheet } from '@/lib/live-attendance';
 import { cacheRoster, enqueueAttendance, readRoster } from '@/lib/offline-store';
 import { toast } from 'sonner';
 import {
@@ -45,6 +46,7 @@ export default function GeneralAttendancePage() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [records, setRecords] = useState<Record<string, AttendanceStatus>>({});
+  const serverStatus = useRef<Record<string, AttendanceStatus>>({});
   const calendarRef = useRef<HTMLDivElement>(null);
   const defaultsApplied = useRef(false);
 
@@ -95,16 +97,20 @@ export default function GeneralAttendancePage() {
     }
   }, [sessions]);
 
+  useEffect(() => {
+    serverStatus.current = {};
+  }, [sessionId]);
+
   const { data: sheet, refetch: refetchSheet } = useQuery({
     queryKey: ['attendance-sheet', sessionId],
     queryFn: async () => {
       const res = await adminSessionsApi.getAttendance(sessionId!);
       const data = res.data.data;
-      const initial: Record<string, AttendanceStatus> = {};
-      data.sheet.forEach((s: { studentDbId: string; attendance: { status: AttendanceStatus } | null }) => {
-        initial[s.studentDbId] = s.attendance?.status || 'absent';
+      setRecords((prev) => {
+        const applied = applyLiveSheet(prev, serverStatus.current, data.sheet);
+        serverStatus.current = applied.server;
+        return applied.records;
       });
-      setRecords(initial);
       void cacheRoster({
         sessionId,
         courseId: selectedCourse,
@@ -115,6 +121,7 @@ export default function GeneralAttendancePage() {
       return data;
     },
     enabled: !!sessionId,
+    refetchInterval: sessionId ? 2500 : false,
     retry: navigator.onLine ? 1 : false,
   });
 
@@ -390,6 +397,12 @@ export default function GeneralAttendancePage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{presentCount}</span>/{roster.length} present
+              {sessionId && (
+                <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Live
+                </span>
+              )}
             </p>
             <div className="flex gap-2">
               <Button
@@ -486,7 +499,7 @@ export default function GeneralAttendancePage() {
         </>
       )}
 
-      <AlertPreferencesCard />
+      <AlertPreferencesCard audience="staff" />
 
       {!selectedCourse && (
         <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground dark:border-slate-700">

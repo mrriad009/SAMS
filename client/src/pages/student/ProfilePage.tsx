@@ -253,7 +253,7 @@ export default function StudentProfilePage() {
         </CardContent>
       </Card>
 
-      <AlertPreferencesCard />
+      <AlertPreferencesCard audience="student" />
     </div>
   );
 }

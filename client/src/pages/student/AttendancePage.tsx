@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getAttendanceColor, formatDate } from '@/lib/utils';
+import { AlertPreferencesCard } from '@/components/shared/AlertPreferencesCard';
 
 export default function StudentAttendancePage() {
   const { data: summary, isLoading: summaryLoading } = useQuery({
@@ -30,6 +31,8 @@ export default function StudentAttendancePage() {
         <h2 className="font-display text-2xl font-bold">My Attendance</h2>
         <p className="text-muted-foreground">Track your class attendance records</p>
       </div>
+
+      <AlertPreferencesCard audience="student" />
 
       {summary?.overall?.belowThreshold && (
         <div className="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4">

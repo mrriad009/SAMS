@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Check, X, Clock, ShieldCheck } from 'lucide-react';
@@ -12,6 +12,7 @@ import { SelectField } from '@/components/ui/select-field';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { SessionQrPanel } from '@/components/attendance/SessionQrPanel';
+import { applyLiveSheet } from '@/lib/live-attendance';
 import { CSE_DEPARTMENT, SECTIONS, SEMESTERS } from '@/config/academic';
 import { useStaffPermissions } from '@/hooks/useStaffPermissions';
 
@@ -33,6 +34,7 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [records, setRecords] = useState<Record<string, AttendanceStatus>>({});
+  const serverStatus = useRef<Record<string, AttendanceStatus>>({});
 
   useEffect(() => {
     if (lockedSemester != null || lockedSection) {
@@ -66,19 +68,24 @@ export default function AttendancePage() {
     enabled: !!selectedCourse,
   });
 
+  useEffect(() => {
+    serverStatus.current = {};
+  }, [sessionId]);
+
   const { data: sheet, refetch: refetchSheet } = useQuery({
     queryKey: ['attendance-sheet', sessionId],
     queryFn: async () => {
       const res = await adminSessionsApi.getAttendance(sessionId!);
       const data = res.data.data;
-      const initial: Record<string, AttendanceStatus> = {};
-      data.sheet.forEach((s: { studentDbId: string; attendance: { status: AttendanceStatus } | null }) => {
-        initial[s.studentDbId] = s.attendance?.status || 'absent';
+      setRecords((prev) => {
+        const applied = applyLiveSheet(prev, serverStatus.current, data.sheet);
+        serverStatus.current = applied.server;
+        return applied.records;
       });
-      setRecords(initial);
       return data;
     },
     enabled: !!sessionId,
+    refetchInterval: sessionId ? 2500 : false,
   });
 
   const createSessionMutation = useMutation({
@@ -262,9 +269,13 @@ export default function AttendancePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 Student Roster ({roster.length}
                 {filters.section && sheet.sheet.length !== roster.length ? ` of ${sheet.sheet.length}` : ''})
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Live
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">

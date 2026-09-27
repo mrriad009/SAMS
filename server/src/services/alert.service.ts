@@ -206,6 +206,23 @@ export async function dispatchAlert(
   return { inApp: true, email, sms, push };
 }
 
+/** In-app plus phone push. Skips email so a full class save does not wait on mail. */
+export async function notifyStudentMark(
+  userId: string,
+  data: { title: string; message: string; referenceId?: string }
+) {
+  await createNotification(userId, {
+    title: data.title,
+    message: data.message,
+    type: 'general',
+    referenceId: data.referenceId,
+    referenceType: 'attendance',
+  });
+  const prefs = await getPreferences(userId);
+  const push = prefs.pushEnabled ? await sendPush(userId, data.title, data.message) : false;
+  return { inApp: true, push };
+}
+
 export async function sendWeeklyDefaulterAlerts(scope?: {
   department?: string;
   section?: string;

@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../config/db.js';
-import { classSessions, sessionQrTokens, studentCourses, students } from '../models/schema.js';
+import { attendance, classSessions, courses, sessionQrTokens, studentCourses, students } from '../models/schema.js';
 import { AppError } from '../utils/response.js';
 import { submitAttendance } from './attendance.service.js';
 
@@ -51,7 +51,18 @@ export async function checkInWithQr(userId: string, rawToken: string) {
   const [student] = await db.select().from(students).where(eq(students.userId, userId)).limit(1);
   if (!student) throw new AppError('Student profile not found', 404);
 
-  const [session] = await db.select().from(classSessions).where(eq(classSessions.id, qr.sessionId)).limit(1);
+  const [session] = await db
+    .select({
+      id: classSessions.id,
+      courseId: classSessions.courseId,
+      date: classSessions.date,
+      courseCode: courses.courseCode,
+      courseName: courses.courseName,
+    })
+    .from(classSessions)
+    .innerJoin(courses, eq(courses.id, classSessions.courseId))
+    .where(eq(classSessions.id, qr.sessionId))
+    .limit(1);
   if (!session) throw new AppError('Class session not found', 404);
 
   const [enrollment] = await db
@@ -61,17 +72,49 @@ export async function checkInWithQr(userId: string, rawToken: string) {
     .limit(1);
   if (!enrollment) throw new AppError('You are not enrolled in this class', 403);
 
-  await submitAttendance(
-    session.id,
-    [{ studentId: student.id, status: 'present', markSource: 'qr', remarks: 'QR check-in' }],
-    userId
-  );
-
-  return {
+  const result = {
     sessionId: session.id,
     courseId: session.courseId,
+    courseCode: session.courseCode,
+    courseName: session.courseName,
     date: session.date,
     status: 'present' as const,
     markSource: 'qr' as const,
+    alreadyMarked: false,
   };
+
+  const [existing] = await db
+    .select({ status: attendance.status })
+    .from(attendance)
+    .where(and(eq(attendance.sessionId, session.id), eq(attendance.studentId, student.id)))
+    .limit(1);
+  if (existing?.status === 'present') {
+    return { ...result, alreadyMarked: true };
+  }
+
+  try {
+    await submitAttendance(
+      session.id,
+      [{ studentId: student.id, status: 'present', markSource: 'qr', remarks: 'QR check-in' }],
+      userId
+    );
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+    return { ...result, alreadyMarked: true };
+  }
+
+  return result;
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+  while (current && typeof current === 'object' && !seen.has(current)) {
+    seen.add(current);
+    const row = current as { code?: string; message?: string; cause?: unknown };
+    if (row.code === '23505') return true;
+    if (typeof row.message === 'string' && /duplicate key|unique constraint/i.test(row.message)) return true;
+    current = row.cause;
+  }
+  return false;
 }

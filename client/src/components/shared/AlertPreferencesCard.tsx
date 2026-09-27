@@ -25,7 +25,7 @@ function urlBase64ToUint8Array(base64String: string) {
   return output;
 }
 
-export function AlertPreferencesCard() {
+export function AlertPreferencesCard({ audience = 'staff' }: { audience?: 'staff' | 'student' }) {
   const [prefs, setPrefs] = useState<AlertPreferences>(DEFAULTS);
 
   useQuery({
@@ -86,7 +86,12 @@ export function AlertPreferencesCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Alert preferences</CardTitle>
+        <CardTitle>{audience === 'student' ? 'Your alerts' : 'Your staff alerts'}</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          {audience === 'student'
+            ? 'Turn on push to get a phone alert when you are marked present, absent, late, or excused, and when leave is decided.'
+            : 'These switches are for this staff account. Students get their own alerts, including when you save their attendance.'}
+        </p>
       </CardHeader>
       <CardContent className="space-y-3">
         {rows.map((row) => (
