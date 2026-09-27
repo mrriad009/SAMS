@@ -37,6 +37,9 @@ const StudentAnnouncements = lazy(() => import('@/pages/student/AnnouncementsPag
 const StudentRoutine = lazy(() => import('@/pages/student/RoutinePage'));
 const StudentProfile = lazy(() => import('@/pages/student/ProfilePage'));
 const StudentNotifications = lazy(() => import('@/pages/student/NotificationsPage'));
+const StudentLeave = lazy(() => import('@/pages/student/LeavePage'));
+const StudentCheckIn = lazy(() => import('@/pages/student/CheckInPage'));
+const LeaveInbox = lazy(() => import('@/pages/admin/LeaveInboxPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,6 +103,7 @@ export default function App() {
               <Route path="courses" element={<AdminCourses />} />
               <Route path="attendance" element={<AdminAttendance />} />
               <Route path="reports" element={<AdminReports />} />
+              <Route path="leave" element={<LeaveInbox />} />
               <Route path="announcements" element={<AdminAnnouncements />} />
               <Route path="routine" element={<AdminRoutine />} />
               <Route path="settings" element={<AdminSettings />} />
@@ -120,6 +124,7 @@ export default function App() {
               <Route path="courses" element={<AdminCourses />} />
               <Route path="attendance" element={<AdminAttendance />} />
               <Route path="reports" element={<AdminReports />} />
+              <Route path="leave" element={<LeaveInbox />} />
               <Route path="announcements" element={<AdminAnnouncements />} />
               <Route path="routine" element={<AdminRoutine />} />
               <Route path="settings" element={<AdminSettings />} />
@@ -141,6 +146,8 @@ export default function App() {
               <Route path="routine" element={<StudentRoutine />} />
               <Route path="profile" element={<StudentProfile />} />
               <Route path="notifications" element={<StudentNotifications />} />
+              <Route path="leave" element={<StudentLeave />} />
+              <Route path="check-in" element={<StudentCheckIn />} />
             </Route>
 
             <Route path="*" element={<HomeRedirect />} />

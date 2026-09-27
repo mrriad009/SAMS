@@ -5,6 +5,7 @@ import * as attendanceController from '../../controllers/attendance.controller.j
 import * as announcementController from '../../controllers/announcement.controller.js';
 import * as routineController from '../../controllers/routine.controller.js';
 import * as notificationController from '../../controllers/notification.controller.js';
+import * as leaveController from '../../controllers/leave.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/role.middleware.js';
 
@@ -21,6 +22,9 @@ router.get('/courses/retake-available', courseController.getRetakeAvailableCours
 router.post('/courses/:id/enroll', courseController.enrollInCourse);
 router.delete('/courses/:id/enroll', courseController.unenrollFromCourse);
 router.get('/attendance', attendanceController.getStudentAttendance);
+router.post('/attendance/check-in', attendanceController.checkInWithQr);
+router.get('/leave', leaveController.listMine);
+router.post('/leave', leaveController.createMine);
 router.get('/attendance/summary', attendanceController.getStudentSummary);
 router.get('/announcements', announcementController.getStudentAnnouncements);
 router.get('/routine', routineController.getStudentRoutine);

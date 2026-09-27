@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, Lock, X } from 'lucide-react';
+import { SessionQrPanel } from '@/components/attendance/SessionQrPanel';
+import { AlertPreferencesCard } from '@/components/shared/AlertPreferencesCard';
+import { SyncStatus } from '@/components/shared/SyncStatus';
+import { notifyOfflineChange } from '@/hooks/useOfflineSync';
+import { cacheRoster, enqueueAttendance, readRoster } from '@/lib/offline-store';
 import { toast } from 'sonner';
 import {
   CSE_DEPARTMENT,
@@ -85,7 +90,7 @@ export default function GeneralAttendancePage() {
   useEffect(() => {
     if (sessions?.length) {
       setSessionId(sessions[0].id);
-    } else {
+    } else if (sessions && navigator.onLine) {
       setSessionId(null);
     }
   }, [sessions]);
@@ -97,21 +102,46 @@ export default function GeneralAttendancePage() {
       const data = res.data.data;
       const initial: Record<string, AttendanceStatus> = {};
       data.sheet.forEach((s: { studentDbId: string; attendance: { status: AttendanceStatus } | null }) => {
-        initial[s.studentDbId] = s.attendance?.status === 'present' ? 'present' : 'absent';
+        initial[s.studentDbId] = s.attendance?.status || 'absent';
       });
       setRecords(initial);
+      void cacheRoster({
+        sessionId,
+        courseId: selectedCourse,
+        date: selectedDate,
+        section,
+        sheet: data.sheet,
+      });
       return data;
     },
     enabled: !!sessionId,
+    retry: navigator.onLine ? 1 : false,
   });
 
+  const { data: cachedRoster } = useQuery({
+    queryKey: ['cached-roster', selectedCourse, selectedDate, section],
+    queryFn: () => readRoster(selectedCourse, selectedDate, section),
+    enabled: !!selectedCourse && !sheet,
+  });
+
+  useEffect(() => {
+    if (sheet || !cachedRoster) return;
+    const initial: Record<string, AttendanceStatus> = {};
+    cachedRoster.sheet.forEach((s) => {
+      initial[s.studentDbId] = (s.attendance?.status as AttendanceStatus) || 'absent';
+    });
+    setRecords(initial);
+    if (cachedRoster.sessionId) setSessionId(cachedRoster.sessionId);
+  }, [cachedRoster, sheet]);
+
   const roster = useMemo(() => {
-    if (!sheet) return [];
-    const list = sheet.sheet.filter((s: { section: string }) => s.section === section);
+    const source = sheet?.sheet || cachedRoster?.sheet;
+    if (!source) return [];
+    const list = source.filter((s: { section: string }) => s.section === section);
     return [...list].sort((a: { studentId: string }, b: { studentId: string }) =>
       a.studentId.localeCompare(b.studentId, undefined, { numeric: true })
     );
-  }, [sheet, section]);
+  }, [sheet, cachedRoster, section]);
 
   const createSessionMutation = useMutation({
     mutationFn: () =>
@@ -147,6 +177,24 @@ export default function GeneralAttendancePage() {
     }
     setSaving(true);
     try {
+      const payload = roster.map((s: { studentDbId: string }) => ({
+        studentId: s.studentDbId,
+        status: records[s.studentDbId] || 'absent',
+      }));
+      const saveLocally = async (sid: string | null) => {
+        await enqueueAttendance({
+          sessionId: sid,
+          courseId: selectedCourse,
+          date: selectedDate,
+          records: payload,
+        });
+        notifyOfflineChange();
+        toast.success('Saved on this phone. It will sync when you are back online.');
+      };
+      if (!navigator.onLine) {
+        await saveLocally(sessionId);
+        return;
+      }
       let sid = sessionId;
       if (!sid) {
         const res = await createSessionMutation.mutateAsync();
@@ -157,29 +205,30 @@ export default function GeneralAttendancePage() {
         toast.error('Failed to start class session');
         return;
       }
-      await adminSessionsApi.submitAttendance(
-        sid,
-        roster.map((s: { studentDbId: string }) => ({
-          studentId: s.studentDbId,
-          status: records[s.studentDbId] || 'absent',
-        }))
-      );
+      await adminSessionsApi.submitAttendance(sid, payload);
       toast.success('Attendance saved');
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       refetchSheet();
     } catch {
-      toast.error('Failed to save attendance');
+      if (!navigator.onLine) {
+        toast.error('Could not store attendance on this phone');
+      } else {
+        toast.error('Failed to save attendance');
+      }
     } finally {
       setSaving(false);
     }
   };
 
+  const cycle: AttendanceStatus[] = ['absent', 'present', 'late', 'excused'];
+
   const toggleStudent = (id: string) => {
     if (!canManageAttendance) return;
-    setRecords((prev) => ({
-      ...prev,
-      [id]: prev[id] === 'present' ? 'absent' : 'present',
-    }));
+    setRecords((prev) => {
+      const current = prev[id] || 'absent';
+      const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+      return { ...prev, [id]: next };
+    });
   };
 
   const markAllPresent = () => {
@@ -195,6 +244,7 @@ export default function GeneralAttendancePage() {
 
   return (
     <div className="min-w-0 space-y-5">
+      <SyncStatus />
       <div>
         <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">Take attendance</h1>
         <p className="text-sm text-muted-foreground">
@@ -361,7 +411,8 @@ export default function GeneralAttendancePage() {
                 </Button>
               )}
               <Button
-                size="sm"
+                size="lg"
+                className="min-h-12 px-5"
                 onClick={handleSave}
                 disabled={saving || !roster.length || !canManageAttendance}
               >
@@ -370,6 +421,8 @@ export default function GeneralAttendancePage() {
             </div>
           </div>
 
+          {sessionId && canManageAttendance && <SessionQrPanel sessionId={sessionId} />}
+
           {!roster.length && sheet && (
             <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground dark:border-slate-700">
               No students enrolled in this course for section {section}.
@@ -377,32 +430,42 @@ export default function GeneralAttendancePage() {
           )}
 
           {roster.length > 0 && (
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-              {roster.map((s: { studentDbId: string; studentId: string; name: string }) => {
-                const present = records[s.studentDbId] === 'present';
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              {roster.map((s: { studentDbId: string; studentId: string; name: string; attendance?: { markSource?: string } | null }) => {
+                const status = records[s.studentDbId] || 'absent';
                 const suffix = studentIdSuffix(s.studentId);
+                const tone =
+                  status === 'present'
+                    ? 'border-success/60 bg-success/15 text-success'
+                    : status === 'late'
+                      ? 'border-amber-500/60 bg-amber-500/15 text-amber-500'
+                      : status === 'excused'
+                        ? 'border-sky-500/60 bg-sky-500/15 text-sky-400'
+                        : 'border-danger/40 bg-danger/10 text-danger';
                 return (
                   <button
                     key={s.studentDbId}
                     type="button"
-                    title={`${s.name} · ${s.studentId}`}
+                    title={`${s.name} · ${s.studentId} · ${status}`}
                     disabled={!canManageAttendance}
                     onClick={() => toggleStudent(s.studentDbId)}
                     className={cn(
-                      'group relative flex aspect-square flex-col items-center justify-center rounded-xl border-2 transition-all',
+                      'group relative flex min-h-20 flex-col items-center justify-center rounded-xl border-2 px-1 py-2 transition-all',
                       canManageAttendance && 'active:scale-95',
                       !canManageAttendance && 'cursor-default opacity-90',
-                      present
-                        ? 'border-success/60 bg-success/15 text-success'
-                        : 'border-danger/40 bg-danger/10 text-danger'
+                      tone
                     )}
                   >
-                    <span className="font-display text-lg font-bold leading-none sm:text-xl">{suffix}</span>
-                    <span className="mt-0.5 max-w-full truncate px-1 text-[9px] opacity-70 group-hover:opacity-100">
+                    <span className="font-display text-xl font-bold leading-none">{suffix}</span>
+                    <span className="mt-1 max-w-full truncate px-1 text-[10px] uppercase">{status}</span>
+                    <span className="mt-0.5 max-w-full truncate px-1 text-[9px] opacity-70">
                       {s.name.split(' ').pop()}
                     </span>
+                    {s.attendance?.markSource === 'qr' && (
+                      <span className="absolute left-1 top-1 text-[8px] font-semibold uppercase">QR</span>
+                    )}
                     <span className="absolute right-1 top-1 opacity-60">
-                      {present ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                      {status === 'present' ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                     </span>
                   </button>
                 );
@@ -422,6 +485,8 @@ export default function GeneralAttendancePage() {
           )}
         </>
       )}
+
+      <AlertPreferencesCard />
 
       {!selectedCourse && (
         <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground dark:border-slate-700">

@@ -97,7 +97,12 @@ export async function getSessionAttendance(sessionId: string) {
 
 export async function submitAttendance(
   sessionId: string,
-  records: Array<{ studentId: string; status: 'present' | 'absent' | 'late' | 'excused'; remarks?: string }>,
+  records: Array<{
+    studentId: string;
+    status: 'present' | 'absent' | 'late' | 'excused';
+    remarks?: string;
+    markSource?: 'manual' | 'qr';
+  }>,
   markedBy: string
 ) {
   await getSessionAttendance(sessionId);
@@ -112,12 +117,17 @@ export async function submitAttendance(
       )
       .limit(1);
 
+    const markSource =
+      record.markSource ??
+      (existing && existing.status === record.status ? existing.markSource : 'manual');
+
     if (existing) {
       await db
         .update(attendance)
         .set({
           status: record.status,
-          remarks: record.remarks,
+          markSource,
+          remarks: record.remarks ?? existing.remarks,
           markedAt: new Date(),
           markedBy,
         })
@@ -127,6 +137,7 @@ export async function submitAttendance(
         sessionId,
         studentId: record.studentId,
         status: record.status,
+        markSource,
         markedBy,
         remarks: record.remarks,
       });
@@ -187,6 +198,7 @@ export async function getStudentAttendance(userId: string, filters?: { courseId?
     .select({
       id: attendance.id,
       status: attendance.status,
+      markSource: attendance.markSource,
       markedAt: attendance.markedAt,
       remarks: attendance.remarks,
       sessionDate: classSessions.date,

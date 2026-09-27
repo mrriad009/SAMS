@@ -22,9 +22,20 @@ const publicClient = axios.create({
 export interface AppConfig {
   appMode: 'general' | 'advanced';
   department: string;
+  departments?: Array<{ code: string; name: string }>;
   currentSemester: number;
   attendanceThreshold: number;
   academicYear: string;
+}
+
+export interface AlertPreferences {
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+  lowAttendance: boolean;
+  announcements: boolean;
+  reminders: boolean;
+  leaveUpdates: boolean;
 }
 
 export const publicApi = {
@@ -97,6 +108,11 @@ export const adminSessionsApi = {
   getAttendance: (id: string) => api.get(`/admin/sessions/${id}/attendance`),
   submitAttendance: (id: string, records: Array<{ studentId: string; status: string; remarks?: string }>) =>
     api.post(`/admin/sessions/${id}/attendance`, { records }),
+  createQr: (id: string, minutes = 15) =>
+    api.post<ApiResponse<{ token: string; expiresAt: string; sessionId: string; windowMinutes: number }>>(
+      `/admin/sessions/${id}/qr`,
+      { minutes }
+    ),
 };
 
 export const adminAttendanceApi = {
@@ -142,6 +158,8 @@ export const adminReportsApi = {
   lowAttendance: () => api.get('/admin/reports/low-attendance'),
   todaySessions: () => api.get('/admin/reports/today-sessions'),
   report: (params?: Record<string, string>) => api.get('/admin/reports/attendance', { params }),
+  exportReport: (params: Record<string, string>) =>
+    api.get('/admin/reports/export', { params, responseType: 'blob' }),
   getSettings: () => api.get('/admin/reports/settings'),
   updateSettings: (data: Record<string, string>) => api.patch('/admin/reports/settings', data),
   updateProfile: (data: Partial<User>) => api.patch('/admin/reports/profile', data),
@@ -181,4 +199,27 @@ export const studentApi = {
   unreadCount: () => api.get<ApiResponse<{ count: number }>>('/student/notifications/unread-count'),
   markRead: (id: string) => api.patch(`/student/notifications/${id}/read`),
   markAllRead: () => api.patch('/student/notifications/read-all'),
+  checkIn: (token: string) => api.post('/student/attendance/check-in', { token }),
+  leaves: () => api.get('/student/leave'),
+  createLeave: (data: { dateFrom: string; dateTo: string; courseIds: string[]; reason: string; note?: string }) =>
+    api.post('/student/leave', data),
+};
+
+export const leaveApi = {
+  inbox: (params?: Record<string, string>) => api.get('/admin/leave', { params }),
+  review: (id: string, data: { decision: 'approved' | 'rejected'; reviewNote?: string }) =>
+    api.patch(`/admin/leave/${id}`, data),
+};
+
+export const departmentApi = {
+  list: () => api.get<ApiResponse<Array<{ id: string; code: string; name: string }>>>('/admin/departments'),
+  create: (data: { code: string; name: string }) => api.post('/admin/departments', data),
+};
+
+export const alertsApi = {
+  preferences: () => api.get<ApiResponse<AlertPreferences>>('/alerts/preferences'),
+  savePreferences: (data: AlertPreferences) => api.patch('/alerts/preferences', data),
+  vapidPublicKey: () => api.get<ApiResponse<{ publicKey: string }>>('/alerts/vapid-public-key'),
+  subscribePush: (subscription: PushSubscriptionJSON) => api.post('/alerts/push-subscription', subscription),
+  weeklyDefaulters: () => api.post('/alerts/weekly-defaulters'),
 };

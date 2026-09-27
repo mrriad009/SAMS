@@ -53,7 +53,7 @@ export async function createNotification(
   data: {
     title: string;
     message: string;
-    type: 'low_attendance' | 'announcement' | 'session_reminder' | 'general';
+    type: 'low_attendance' | 'announcement' | 'session_reminder' | 'leave_update' | 'general';
     referenceId?: string;
     referenceType?: string;
   }
@@ -71,7 +71,7 @@ export async function createNotificationForUsers(
   data: {
     title: string;
     message: string;
-    type: 'low_attendance' | 'announcement' | 'session_reminder' | 'general';
+    type: 'low_attendance' | 'announcement' | 'session_reminder' | 'leave_update' | 'general';
     referenceId?: string;
     referenceType?: string;
   }

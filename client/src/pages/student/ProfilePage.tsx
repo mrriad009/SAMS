@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { SelectField } from '@/components/ui/select-field';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DEPARTMENTS, SECTIONS } from '@/config/academic';
+import { useAppConfig } from '@/hooks/useAppMode';
+import { AlertPreferencesCard } from '@/components/shared/AlertPreferencesCard';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 
 interface ProfileForm {
@@ -70,6 +72,8 @@ export default function StudentProfilePage() {
   });
 
   const profile = user?.profile as StudentProfile | undefined;
+  const { data: appConfig } = useAppConfig();
+  const departmentNames = appConfig?.departments?.map((item) => item.name) || [...DEPARTMENTS];
 
   const changePassword = async () => {
     try {
@@ -155,7 +159,7 @@ export default function StudentProfilePage() {
                 <option value="" disabled>
                   Select department
                 </option>
-                {DEPARTMENTS.map((d) => (
+                {departmentNames.map((d) => (
                   <option key={d} value={d}>
                     {d}
                   </option>
@@ -248,6 +252,8 @@ export default function StudentProfilePage() {
           </p>
         </CardContent>
       </Card>
+
+      <AlertPreferencesCard />
     </div>
   );
 }

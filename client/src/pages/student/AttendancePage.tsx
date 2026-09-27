@@ -80,7 +80,10 @@ export default function StudentAttendancePage() {
                       <span className="hidden sm:inline"> {r.courseName}</span>
                     </td>
                     <td className="p-3 hidden sm:table-cell text-muted-foreground sm:p-4">{r.sessionTopic || '-'}</td>
-                    <td className="p-3 sm:p-4"><Badge variant={statusVariant(r.status) as 'success'}>{r.status}</Badge></td>
+                    <td className="p-3 sm:p-4">
+                      <Badge variant={statusVariant(r.status) as 'success'}>{r.status}</Badge>
+                      {r.markSource === 'qr' && <Badge className="ml-1">QR</Badge>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -32,6 +32,7 @@ export async function getAttendanceReport(filters: ReportFilters) {
     .select({
       id: attendance.id,
       status: attendance.status,
+      markSource: attendance.markSource,
       markedAt: attendance.markedAt,
       sessionDate: classSessions.date,
       courseCode: courses.courseCode,

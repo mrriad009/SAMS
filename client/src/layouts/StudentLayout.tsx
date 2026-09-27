@@ -10,7 +10,10 @@ import {
   User,
   Bell,
   LogOut,
+  QrCode,
+  CalendarClock,
 } from 'lucide-react';
+import { InstallPrompt } from '@/components/shared/InstallPrompt';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,10 +24,10 @@ const navItems = [
   { path: '/student/courses', label: 'Courses', icon: BookOpen },
   { path: '/student/announcements', label: 'News', icon: Megaphone },
   { path: '/student/routine', label: 'Routine', icon: Calendar },
+  { path: '/student/check-in', label: 'Scan', icon: QrCode },
+  { path: '/student/leave', label: 'Leave', icon: CalendarClock },
   { path: '/student/profile', label: 'Profile', icon: User },
 ];
-
-const mobileNav = navItems.slice(0, 5);
 
 export function StudentLayout() {
   const location = useLocation();
@@ -78,6 +81,7 @@ export function StudentLayout() {
             {APP_NAME}
           </span>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2 ml-auto">
+            <InstallPrompt />
             <Link to="/student/notifications" className="lg:hidden">
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
@@ -101,8 +105,8 @@ export function StudentLayout() {
           </motion.div>
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-slate-200 bg-surface dark:border-slate-700 dark:bg-dark-surface lg:hidden">
-          {mobileNav.map((item) => {
+        <nav className="fixed bottom-0 left-0 right-0 z-40 flex overflow-x-auto border-t border-slate-200 bg-surface dark:border-slate-700 dark:bg-dark-surface lg:hidden">
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname.startsWith(item.path);
             return (
@@ -110,7 +114,7 @@ export function StudentLayout() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-1 flex-col items-center gap-1 py-2 text-xs',
+                  'flex min-w-[4.25rem] flex-1 flex-col items-center gap-1 py-2 text-[10px]',
                   active ? 'text-primary' : 'text-slate-500'
                 )}
               >

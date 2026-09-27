@@ -92,9 +92,12 @@ export interface ClassSession {
 
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 
+export type MarkSource = 'manual' | 'qr';
+
 export interface AttendanceRecord {
   id: string;
   status: AttendanceStatus;
+  markSource?: MarkSource;
   markedAt: string;
   remarks?: string | null;
   sessionDate: string;
@@ -137,7 +140,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'low_attendance' | 'announcement' | 'session_reminder' | 'general';
+  type: 'low_attendance' | 'announcement' | 'session_reminder' | 'leave_update' | 'general';
   isRead: boolean;
   createdAt: string;
 }

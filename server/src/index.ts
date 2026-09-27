@@ -1,10 +1,10 @@
+import './config/load-env.js';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import 'dotenv/config';
 
 import { env, validateEnv } from './config/env.js';
 import { configureCloudinary } from './utils/cloudinary.js';

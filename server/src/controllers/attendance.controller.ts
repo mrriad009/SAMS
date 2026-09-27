@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import * as attendanceService from '../services/attendance.service.js';
+import * as qrService from '../services/qr.service.js';
 import * as permissions from '../services/permissions.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { paramId } from '../utils/params.js';
@@ -76,6 +77,21 @@ export async function submitAttendance(req: Request, res: Response) {
 
   const data = await attendanceService.submitAttendance(sessionId, records, req.user!.userId);
   return sendSuccess(res, data, 'Attendance submitted');
+}
+
+export async function createSessionQr(req: Request, res: Response) {
+  const sessionId = paramId(req.params.id);
+  if (req.user?.role === 'teacher') {
+    await permissions.assertSessionInTeacherScope(req.user.userId, sessionId);
+  }
+  const minutes = Number(req.body.minutes) || 15;
+  const qr = await qrService.createSessionQr(sessionId, req.user!.userId, minutes);
+  return sendSuccess(res, qr, 'QR code created', 201);
+}
+
+export async function checkInWithQr(req: Request, res: Response) {
+  const result = await qrService.checkInWithQr(req.user!.userId, String(req.body.token || ''));
+  return sendSuccess(res, result, 'Attendance recorded');
 }
 
 export async function getStudentAttendance(req: Request, res: Response) {

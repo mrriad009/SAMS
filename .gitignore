@@ -4,10 +4,13 @@ build/
 .env
 .env.local
 .env.example
+.vapid.json
+server/.vapid.json
 *.log
 .DS_Store
 uploads/
 client/dist/
+client/dev-dist/
 server/dist/
 drizzle/meta/
 report_assets/database_er_easy.png

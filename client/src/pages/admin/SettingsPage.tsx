@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { authApi, adminReportsApi } from '@/services/endpoints';
+import { authApi, adminReportsApi, departmentApi } from '@/services/endpoints';
+import { AlertPreferencesCard } from '@/components/shared/AlertPreferencesCard';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState({ name: user?.name || '', phone: user?.phone || '' });
   const [passwords, setPasswords] = useState({ current: '', newPass: '' });
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [department, setDepartment] = useState({ code: '', name: '' });
 
   useQuery({
     queryKey: ['settings'],
@@ -23,6 +25,24 @@ export default function SettingsPage() {
       const res = await adminReportsApi.getSettings();
       setSettings(res.data.data);
       return res.data.data;
+    },
+  });
+
+  const { data: departments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: async () => (await departmentApi.list()).data.data,
+  });
+
+  const addDepartment = useMutation({
+    mutationFn: () => departmentApi.create(department),
+    onSuccess: () => {
+      toast.success('Department added');
+      setDepartment({ code: '', name: '' });
+      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      queryClient.invalidateQueries({ queryKey: ['app-config'] });
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      toast.error(error.response?.data?.message || 'Could not add the department');
     },
   });
 
@@ -90,6 +110,29 @@ export default function SettingsPage() {
           {!readOnly && <Button onClick={() => updateSettingsMutation.mutate(settings)}>Save Settings</Button>}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Departments</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <ul className="space-y-1 text-sm">
+            {(departments || []).map((item) => (
+              <li key={item.id}>{item.code} · {item.name}</li>
+            ))}
+          </ul>
+          {!readOnly && (
+            <div className="grid gap-2 sm:grid-cols-[8rem_1fr_auto]">
+              <Input placeholder="EEE" value={department.code} onChange={(e) => setDepartment({ ...department, code: e.target.value })} />
+              <Input placeholder="Department name" value={department.name} onChange={(e) => setDepartment({ ...department, name: e.target.value })} />
+              <Button onClick={() => addDepartment.mutate()} disabled={addDepartment.isPending}>Add</Button>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Courses, routines, and staff stay inside their own department. Admins can see every department from this panel.
+          </p>
+        </CardContent>
+      </Card>
+
+      <AlertPreferencesCard />
 
       {!readOnly && (
         <>

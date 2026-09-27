@@ -22,8 +22,11 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'low_attendance',
   'announcement',
   'session_reminder',
+  'leave_update',
   'general',
 ]);
+export const markSourceEnum = pgEnum('mark_source', ['manual', 'qr']);
+export const leaveStatusEnum = pgEnum('leave_status', ['pending', 'approved', 'rejected']);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -118,6 +121,7 @@ export const attendance = pgTable(
       .notNull()
       .references(() => students.id, { onDelete: 'cascade' }),
     status: attendanceStatusEnum('status').notNull().default('absent'),
+    markSource: markSourceEnum('mark_source').notNull().default('manual'),
     markedAt: timestamp('marked_at').defaultNow().notNull(),
     markedBy: uuid('marked_by').references(() => users.id),
     remarks: text('remarks'),
@@ -216,6 +220,78 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
     .references(() => users.id, { onDelete: 'cascade' }),
   tokenHash: text('token_hash').notNull(),
   expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const departments = pgTable('departments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: varchar('code', { length: 20 }).notNull().unique(),
+  name: varchar('name', { length: 150 }).notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const leaveRequests = pgTable('leave_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  studentId: uuid('student_id')
+    .notNull()
+    .references(() => students.id, { onDelete: 'cascade' }),
+  dateFrom: date('date_from').notNull(),
+  dateTo: date('date_to').notNull(),
+  reason: text('reason').notNull(),
+  note: text('note'),
+  status: leaveStatusEnum('status').notNull().default('pending'),
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
+  reviewNote: text('review_note'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const leaveRequestCourses = pgTable(
+  'leave_request_courses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    leaveRequestId: uuid('leave_request_id')
+      .notNull()
+      .references(() => leaveRequests.id, { onDelete: 'cascade' }),
+    courseId: uuid('course_id')
+      .notNull()
+      .references(() => courses.id, { onDelete: 'cascade' }),
+  },
+  (table) => [uniqueIndex('leave_request_course_unique').on(table.leaveRequestId, table.courseId)]
+);
+
+export const sessionQrTokens = pgTable('session_qr_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id')
+    .notNull()
+    .references(() => classSessions.id, { onDelete: 'cascade' }),
+  token: varchar('token', { length: 80 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const notificationPreferences = pgTable('notification_preferences', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  pushEnabled: boolean('push_enabled').notNull().default(true),
+  emailEnabled: boolean('email_enabled').notNull().default(true),
+  smsEnabled: boolean('sms_enabled').notNull().default(false),
+  lowAttendance: boolean('low_attendance').notNull().default(true),
+  announcements: boolean('announcements').notNull().default(true),
+  reminders: boolean('reminders').notNull().default(true),
+  leaveUpdates: boolean('leave_updates').notNull().default(true),
+});
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

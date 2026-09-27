@@ -5,6 +5,7 @@ import { CSE_DEPARTMENT } from '@/config/academic';
 import { useAuth } from '@/hooks/useAuth';
 import { getAdvancedPanelPath, getStaffAnnouncementsPath, getStaffRoutinePath } from '@/lib/staff-routes';
 import { Button } from '@/components/ui/button';
+import { InstallPrompt } from '@/components/shared/InstallPrompt';
 
 export function GeneralLayout() {
   const { user, logout } = useAuth();
@@ -24,6 +25,7 @@ export function GeneralLayout() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
+            <InstallPrompt />
             <Button variant="outline" size="sm" asChild>
               <Link to={routinePath}>
                 <Calendar className="mr-1.5 h-4 w-4" />

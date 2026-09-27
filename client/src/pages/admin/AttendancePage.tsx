@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { SelectField } from '@/components/ui/select-field';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { SessionQrPanel } from '@/components/attendance/SessionQrPanel';
 import { CSE_DEPARTMENT, SECTIONS, SEMESTERS } from '@/config/academic';
 import { useStaffPermissions } from '@/hooks/useStaffPermissions';
 
@@ -257,6 +258,7 @@ export default function AttendancePage() {
               Save & Submit
             </Button>
           </div>
+          {sessionId && <SessionQrPanel sessionId={sessionId} />}
 
           <Card>
             <CardHeader>
@@ -267,11 +269,14 @@ export default function AttendancePage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y dark:divide-slate-700">
-                {roster.map((s: { studentDbId: string; studentId: string; name: string; section: string }) => (
+                {roster.map((s: { studentDbId: string; studentId: string; name: string; section: string; attendance?: { markSource?: string } | null }) => (
                   <div key={s.studentDbId} className="row-stack p-3 sm:p-4">
                     <div className="min-w-0">
                       <p className="font-medium truncate">{s.name}</p>
-                      <p className="text-xs text-muted-foreground font-mono">{s.studentId} · Sec {s.section}</p>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {s.studentId} · Sec {s.section}
+                        {s.attendance?.markSource === 'qr' ? ' · QR' : ''}
+                      </p>
                     </div>
                     <div className="flex flex-wrap gap-1 self-start sm:self-center">
                       {(Object.keys(statusConfig) as AttendanceStatus[]).map((status) => {

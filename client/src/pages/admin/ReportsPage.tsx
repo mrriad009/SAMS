@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { adminReportsApi, adminCoursesApi } from '@/services/endpoints';
+import { adminReportsApi, adminCoursesApi, alertsApi } from '@/services/endpoints';
+import { useAppConfig } from '@/hooks/useAppMode';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +24,15 @@ export default function ReportsPage() {
   const teacherProfile = user?.profile as TeacherProfile | undefined;
   const defaultSection = lockedSection ?? (readOnly && teacherProfile?.section ? teacherProfile.section : '');
 
-  const [filters, setFilters] = useState({ courseId: '', dateFrom: '', dateTo: '', section: defaultSection });
+  const { data: appConfig } = useAppConfig();
+  const [filters, setFilters] = useState({
+    courseId: '',
+    dateFrom: '',
+    dateTo: '',
+    section: defaultSection,
+    department: '',
+  });
+  const [exporting, setExporting] = useState<'pdf' | 'xlsx' | null>(null);
 
   const { data: courses } = useQuery({
     queryKey: ['courses', readOnly ? teacherProfile?.department : undefined],
@@ -42,6 +53,40 @@ export default function ReportsPage() {
     queryKey: ['report', filters],
     queryFn: async () => (await adminReportsApi.report(filters)).data.data,
   });
+
+  const download = async (format: 'pdf' | 'xlsx') => {
+    setExporting(format);
+    try {
+      const params: Record<string, string> = { format };
+      if (filters.courseId) params.courseId = filters.courseId;
+      if (filters.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters.dateTo) params.dateTo = filters.dateTo;
+      if (filters.section) params.section = filters.section;
+      if (filters.department) params.department = filters.department;
+      const response = await adminReportsApi.exportReport(params);
+      const blob = new Blob([response.data]);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = format === 'pdf' ? 'attendance-report.pdf' : 'attendance-report.xlsx';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Could not download the report');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const sendDigest = async () => {
+    try {
+      const res = await alertsApi.weeklyDefaulters();
+      const result = res.data.data as { notified: number; emailed: number };
+      toast.success(`Notified ${result.notified} students. Emails sent: ${result.emailed}.`);
+    } catch {
+      toast.error('Could not send the defaulter summary');
+    }
+  };
 
   const defaulters = useMemo(
     () =>
@@ -90,6 +135,23 @@ export default function ReportsPage() {
               <Label>To</Label>
               <Input type="date" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
             </div>
+            {!readOnly && (
+              <div className="field-full">
+                <Label>Department</Label>
+                <select
+                  className="select-field"
+                  value={filters.department}
+                  onChange={(e) => setFilters({ ...filters, department: e.target.value })}
+                >
+                  <option value="">All departments</option>
+                  {(appConfig?.departments || []).map((department) => (
+                    <option key={department.code} value={department.name}>
+                      {department.code} · {department.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="field-full">
               <Label>Section</Label>
               <Input
@@ -103,6 +165,26 @@ export default function ReportsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          disabled={exporting !== null}
+          onClick={() => void download('pdf')}
+        >
+          {exporting === 'pdf' ? 'Preparing PDF…' : 'Download PDF'}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={exporting !== null}
+          onClick={() => void download('xlsx')}
+        >
+          {exporting === 'xlsx' ? 'Preparing Excel…' : 'Download Excel'}
+        </Button>
+        <Button variant="secondary" onClick={() => void sendDigest()}>
+          Email defaulter summary
+        </Button>
+      </div>
 
       {!isLoading && report && (
         <>

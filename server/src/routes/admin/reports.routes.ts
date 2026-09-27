@@ -10,6 +10,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/attendance', requireRole('admin', 'teacher'), reportController.getReport);
+router.get('/export', requireRole('admin', 'teacher'), reportController.exportReport);
 router.get('/dashboard', requireRole('admin', 'teacher'), attendanceController.getDashboardStats);
 router.get('/trend', requireRole('admin', 'teacher'), attendanceController.getTrend);
 router.get('/low-attendance', requireRole('admin', 'teacher'), attendanceController.getLowAttendance);

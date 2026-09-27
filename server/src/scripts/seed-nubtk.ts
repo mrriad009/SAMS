@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import '../config/load-env.js';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../config/db.js';
 import {

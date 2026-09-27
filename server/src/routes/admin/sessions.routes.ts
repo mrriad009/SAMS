@@ -11,5 +11,6 @@ router.get('/', requireRole('admin', 'teacher'), attendanceController.listSessio
 router.post('/', requireRole('admin', 'teacher'), attendanceController.createSession);
 router.get('/:id/attendance', requireRole('admin', 'teacher'), attendanceController.getSessionAttendance);
 router.post('/:id/attendance', requireRole('admin', 'teacher'), attendanceController.submitAttendance);
+router.post('/:id/qr', requireRole('admin', 'teacher'), attendanceController.createSessionQr);
 
 export default router;
